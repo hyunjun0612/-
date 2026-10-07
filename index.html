@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RoboHand Lab | Physical AI Robot Hand Simulator</title>
+
+<style>
+:root{
+--bg:#071019;
+--panel:#0d1924;
+--panel2:#101f2c;
+--line:#203646;
+--text:#edf8ff;
+--muted:#8ea8b8;
+--cyan:#39e7ff;
+--green:#52ffad;
+--yellow:#ffd76a;
+--red:#ff647c;
+--purple:#a78bfa;
+}
+
+*{
+box-sizing:border-box;
+}
+
+body{
+margin:0;
+font-family:Arial, "Pretendard", sans-serif;
+background:
+radial-gradient(circle at 10% 0%, #123247 0%, transparent 32%),
+radial-gradient(circle at 90% 10%, #162849 0%, transparent 28%),
+var(--bg);
+color:var(--text);
+}
+
+header{
+max-width:1400px;
+margin:auto;
+padding:38px 28px 18px;
+}
+
+.logo{
+color:var(--cyan);
+letter-spacing:2px;
+font-size:13px;
+font-weight:800;
+}
+
+h1{
+margin:13px 0 10px;
+font-size:clamp(34px,5vw,62px);
+line-height:1.05;
+}
+
+.subtitle{
+color:var(--muted);
+max-width:800px;
+font-size:17px;
+line-height:1.7;
+}
+
+.badge{
+display:inline-block;
+margin-top:14px;
+padding:7px 11px;
+border:1px solid #31586b;
+border-radius:999px;
+background:#0b1a25;
+color:#a8deeb;
+font-size:12px;
+}
+
+main{
+max-width:1400px;
+margin:auto;
+padding:18px 28px 70px;
+}
+
+.section-title{
+font-size:15px;
+color:var(--cyan);
+letter-spacing:1px;
+margin:40px 0 15px;
+text-transform:uppercase;
+}
+
+.object-row{
+display:grid;
+grid-template-columns:repeat(5,1fr);
+gap:10px;
+margin-bottom:15px;
+}
+
+.object-btn{
+border:1px solid var(--line);
+background:var(--panel);
+color:var(--text);
+border-radius:15px;
+padding:14px 8px;
+cursor:pointer;
+transition:.2s;
+font-size:14px;
+}
+
+.object-btn .emoji{
+font-size:27px;
+display:block;
+margin-bottom:7px;
+}
+
+.object-btn:hover{
+transform:translateY(-2px);
+border-color:#45758b;
+}
+
+.object-btn.active{
+border-color:var(--cyan);
+background:#102b38;
+box-shadow:0 0 20px #39e7ff22;
+}
+
+.lab-grid{
+display:grid;
+grid-template-columns:330px minmax(380px,1fr) 330px;
+gap:15px;
+}
+
+.panel{
+background:linear-gradient(150deg,#0e1c28,#0a151f);
+border:1px solid var(--line);
+border-radius:20px;
+padding:20px;
+box-shadow:0 18px 45px #00000025;
+}
+
+.panel h2{
+margin:0 0 18px;
+font-size:17px;
+}
+
+.control{
+margin-bottom:21px;
+}
+
+.control-head{
+display:flex;
+justify-content:space-between;
+gap:10px;
+font-size:13px;
+margin-bottom:8px;
+}
+
+.value{
+color:var(--cyan);
+font-weight:700;
+}
+
+input[type=range]{
+width:100%;
+accent-color:var(--cyan);
+}
+
+select{
+width:100%;
+background:#08151e;
+color:white;
+border:1px solid #294354;
+border-radius:9px;
+padding:10px;
+}
+
+.hint{
+color:var(--muted);
+font-size:11px;
+line-height:1.5;
+margin-top:5px;
+}
+
+.stage{
+min-height:510px;
+position:relative;
+overflow:hidden;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+}
+
+.stage::before{
+content:"";
+position:absolute;
+inset:20px;
+background:
+linear-gradient(#15314355 1px,transparent 1px),
+linear-gradient(90deg,#15314355 1px,transparent 1px);
+background-size:35px 35px;
+mask-image:radial-gradient(circle,black,transparent 70%);
+}
+
+.stage-label{
+position:absolute;
+top:21px;
+left:23px;
+font-size:12px;
+color:var(--muted);
+}
+
+.robot-zone{
+width:310px;
+height:330px;
+position:relative;
+}
+
+.palm{
+width:145px;
+height:100px;
+border:2px solid #486c80;
+border-radius:30px 30px 18px 18px;
+background:linear-gradient(145deg,#243c4b,#111f29);
+position:absolute;
+left:82px;
+bottom:15px;
+box-shadow:inset 0 0 30px #6ae8ff13;
+}
+
+.palm::after{
+content:"ROBO•GRIP";
+position:absolute;
+top:40px;
+left:30px;
+font-size:11px;
+color:#70a7ba;
+letter-spacing:1px;
+}
+
+.object{
+width:100px;
+height:100px;
+position:absolute;
+left:105px;
+top:82px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:64px;
+z-index:4;
+transition:.3s;
+}
+
+.object.slip{
+animation:drop .8s infinite alternate;
+}
+
+.object.damage{
+animation:shake .13s infinite;
+filter:saturate(.4);
+}
+
+.object.stable{
+filter:drop-shadow(0 0 18px #52ffad55);
+}
+
+@keyframes drop{
+from{transform:translateY(0)}
+to{transform:translateY(22px)}
+}
+
+@keyframes shake{
+0%{transform:translateX(-3px) rotate(-2deg)}
+50%{transform:translateX(3px) rotate(2deg)}
+100%{transform:translateX(-3px) rotate(-2deg)}
+}
+
+.finger{
+position:absolute;
+left:146px;
+top:141px;
+width:18px;
+height:112px;
+border-radius:12px;
+background:linear-gradient(90deg,#31586b,#789aac,#284352);
+border:1px solid #77a4b8;
+transform-origin:9px 9px;
+z-index:3;
+box-shadow:0 0 12px #39e7ff15;
+}
+
+.sensor{
+width:12px;
+height:12px;
+background:var(--cyan);
+position:absolute;
+left:2px;
+top:3px;
+border-radius:50%;
+box-shadow:0 0 12px var(--cyan);
+}
+
+.status{
+z-index:5;
+margin-top:8px;
+padding:11px 17px;
+border-radius:999px;
+border:1px solid;
+font-weight:800;
+letter-spacing:.5px;
+font-size:13px;
+}
+
+.status.good{
+color:var(--green);
+border-color:#52ffad55;
+background:#52ffad10;
+}
+
+.status.warn{
+color:var(--yellow);
+border-color:#ffd76a55;
+background:#ffd76a10;
+}
+
+.status.bad{
+color:var(--red);
+border-color:#ff647c55;
+background:#ff647c10;
+}
+
+.equation{
+margin-top:20px;
+padding:12px 15px;
+font-family:monospace;
+border-radius:12px;
+background:#06121a;
+border:1px solid #1a3443;
+color:#9feafa;
+z-index:5;
+}
+
+.metrics{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+
+.metric{
+padding:15px;
+border-radius:14px;
+background:#07151f;
+border:1px solid #1d3544;
+}
+
+.metric-name{
+font-size:11px;
+color:var(--muted);
+}
+
+.metric-value{
+margin-top:7px;
+font-size:22px;
+font-weight:800;
+}
+
+.metric-value small{
+font-size:11px;
+color:var(--muted);
+font-weight:400;
+}
+
+.score-box{
+margin-top:11px;
+padding:17px;
+border-radius:14px;
+border:1px solid #304b5b;
+background:linear-gradient(130deg,#102839,#101b2b);
+}
+
+.score-top{
+display:flex;
+align-items:flex-end;
+justify-content:space-between;
+}
+
+.score{
+font-size:44px;
+color:var(--green);
+font-weight:900;
+}
+
+.score-text{
+color:var(--muted);
+font-size:12px;
+}
+
+.bar{
+margin-top:12px;
+height:8px;
+border-radius:8px;
+background:#07131b;
+overflow:hidden;
+}
+
+.bar-fill{
+height:100%;
+width:50%;
+background:linear-gradient(90deg,var(--cyan),var(--green));
+transition:.3s;
+}
+
+.auto-btn{
+border:0;
+width:100%;
+margin-top:13px;
+padding:13px;
+border-radius:12px;
+background:linear-gradient(90deg,#1ccbe2,#43f4ab);
+color:#031016;
+font-weight:900;
+cursor:pointer;
+font-size:14px;
+}
+
+.auto-btn:hover{
+filter:brightness(1.1);
+}
+
+.analysis{
+margin-top:12px;
+font-size:12px;
+color:#b9d0dc;
+line-height:1.6;
+padding:12px;
+background:#07141e;
+border-radius:11px;
+}
+
+.chart-panel{
+margin-top:15px;
+}
+
+canvas{
+width:100%;
+height:320px;
+display:block;
+}
+
+.explain-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:14px;
+}
+
+.explain-card{
+padding:21px;
+border:1px solid var(--line);
+background:var(--panel);
+border-radius:17px;
+}
+
+.explain-card .num{
+color:var(--cyan);
+font-size:12px;
+font-weight:800;
+}
+
+.explain-card h3{
+margin:8px 0;
+}
+
+.explain-card p{
+color:var(--muted);
+line-height:1.65;
+font-size:13px;
+}
+
+.reference{
+margin-top:18px;
+background:#091721;
+border-left:3px solid var(--purple);
+padding:18px;
+color:#a9beca;
+line-height:1.7;
+font-size:12px;
+border-radius:0 12px 12px 0;
+}
+
+.disclaimer{
+margin-top:10px;
+color:#688597;
+font-size:11px;
+}
+
+@media(max-width:1050px){
+.lab-grid{
+grid-template-columns:1fr 1fr;
+}
+.stage{
+grid-column:1/-1;
+grid-row:1;
+}
+}
+
+@media(max-width:700px){
+main,header{
+padding-left:15px;
+padding-right:15px;
+}
+
+.object-row{
+grid-template-columns:repeat(2,1fr);
+}
+
+.lab-grid{
+grid-template-columns:1fr;
+}
+
+.stage{
+grid-column:auto;
+}
+
+.explain-grid{
+grid-template-columns:1fr;
+}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="logo">PHYSICAL AI ENGINEERING LAB</div>
+
+<h1>RoboHand Lab</h1>
+
+<div class="subtitle">
+로봇 손은 강하기만 하면 좋을까?
+모터와 감속기, 촉각 센서의 조건을 직접 바꾸며
+힘·속도·정밀도 사이의 공학적 상충관계를 실험해 보자.
+</div>
+
+<span class="badge">기계공학 × 전기전자공학 × 로보틱스</span>
+</header>
+
+
+<main>
+
+<div class="section-title">01 · OBJECT CHALLENGE</div>
+
+<div class="object-row">
+
+<button class="object-btn active" data-key="egg">
+<span class="emoji">🥚</span>
+달걀
+</button>
+
+<button class="object-btn" data-key="cup">
+<span class="emoji">🥤</span>
+종이컵
+</button>
+
+<button class="object-btn" data-key="bottle">
+<span class="emoji">🧴</span>
+물병
+</button>
+
+<button class="object-btn" data-key="bolt">
+<span class="emoji">🔩</span>
+정밀 볼트
+</button>
+
+<button class="object-btn" data-key="box">
+<span class="emoji">📦</span>
+상자
+</button>
+
+</div>
+
+
+<div class="lab-grid">
+
+<!-- CONTROL -->
+<section class="panel">
+
+<h2>설계 변수</h2>
+
+
+<div class="control">
+
+<div class="control-head">
+<span>모터 토크 τ</span>
+<span class="value" id="torqueVal"></span>
+</div>
+
+<input
+type="range"
+id="torque"
+min="0.005"
+max="0.120"
+step="0.005"
+value="0.025">
+
+<div class="hint">
+모터가 회전시키려는 힘의 크기
+</div>
+
+</div>
+
+
+<div class="control">
+
+<div class="control-head">
+<span>감속 기어비 G</span>
+<span class="value" id="gearVal"></span>
+</div>
+
+<input
+type="range"
+id="gear"
+min="3"
+max="30"
+step="1"
+value="12">
+
+<div class="hint">
+기어비가 커질수록 힘은 커지지만 관절 속도는 감소한다.
+</div>
+
+</div>
+
+
+<div class="control">
+
+<div class="control-head">
+<span>손가락 길이 r</span>
+<span class="value" id="radiusVal"></span>
+</div>
+
+<input
+type="range"
+id="radius"
+min="25"
+max="60"
+step="1"
+value="40">
+
+<div class="hint">
+같은 토크라면 손가락이 길어질수록 끝에서 발생하는 힘은 감소한다.
+</div>
+
+</div>
+
+
+<div class="control">
+
+<div class="control-head">
+<span>손가락 수</span>
+<span class="value" id="fingerVal"></span>
+</div>
+
+<input
+type="range"
+id="fingerCount"
+min="2"
+max="5"
+step="1"
+value="3">
+
+</div>
+
+
+<div class="control">
+
+<div class="control-head">
+<span>관절 유연성</span>
+<span class="value" id="complianceVal"></span>
+</div>
+
+<input
+type="range"
+id="compliance"
+min="0"
+max="100"
+step="1"
+value="65">
+
+<div class="hint">
+높을수록 충격을 흡수하기 쉽지만 위치 제어가 어려워질 수 있다.
+</div>
+
+</div>
+
+
+<div class="control">
+
+<div class="control-head">
+<span>촉각 센서 해상도</span>
+</div>
+
+<select id="sensor">
+<option value="4">4 × 4</option>
+<option value="8" selected>8 × 8</option>
+<option value="16">16 × 16</option>
+<option value="32">32 × 32</option>
+</select>
+
+</div>
+
+</section>
+
+
+<!-- STAGE -->
+<section class="panel stage">
+
+<div class="stage-label">
+REAL-TIME DIGITAL TEST
+</div>
+
+<div class="robot-zone">
+
+<div class="object stable" id="objectVisual">
+🥚
+</div>
+
+<div id="fingerLayer"></div>
+
+<div class="palm"></div>
+
+</div>
+
+<div class="status good" id="status">
+안정적으로 잡을 수 있음
+</div>
+
+<div class="equation">
+F ≈ η × τ × G ÷ r
+</div>
+
+</section>
+
+
+<!-- RESULT -->
+<section class="panel">
+
+<h2>실시간 성능 분석</h2>
+
+<div class="metrics">
+
+<div class="metric">
+<div class="metric-name">손가락 끝 힘</div>
+<div class="metric-value">
+<span id="forceOut">0</span>
+<small>N</small>
+</div>
+</div>
+
+<div class="metric">
+<div class="metric-name">필요 최소 힘</div>
+<div class="metric-value">
+<span id="reqOut">0</span>
+<small>N</small>
+</div>
+</div>
+
+<div class="metric">
+<div class="metric-name">관절 회전속도</div>
+<div class="metric-value">
+<span id="speedOut">0</span>
+<small>rpm</small>
+</div>
+</div>
+
+<div class="metric">
+<div class="metric-name">정밀 조작 지수</div>
+<div class="metric-value">
+<span id="dexOut">0</span>
+<small>/100</small>
+</div>
+</div>
+
+<div class="metric">
+<div class="metric-name">예상 모터 전류</div>
+<div class="metric-value">
+<span id="currentOut">0</span>
+<small>A</small>
+</div>
+</div>
+
+<div class="metric">
+<div class="metric-name">안전 상한 힘</div>
+<div class="metric-value">
+<span id="maxOut">0</span>
+<small>N</small>
+</div>
+</div>
+
+</div>
+
+
+<div class="score-box">
+
+<div class="score-top">
+
+<div>
+<div class="score-text">
+설계 적합도
+</div>
+
+<div class="score" id="score">
+0
+</div>
+</div>
+
+<div class="score-text">
+100점 만점
+</div>
+
+</div>
+
+<div class="bar">
+<div class="bar-fill" id="scoreBar"></div>
+</div>
+
+</div>
+
+<button class="auto-btn" id="optimize">
+⚡ 이 물체에 맞는 설계 자동 탐색
+</button>
+
+<div class="analysis" id="analysis">
+분석 결과
+</div>
+
+</section>
+
+</div>
+
+
+<div class="section-title">
+02 · FORCE–SPEED TRADE-OFF
+</div>
+
+<section class="panel chart-panel">
+
+<h2>
+기어비를 높이면 힘과 속도는 어떻게 바뀔까?
+</h2>
+
+<canvas id="chart"></canvas>
+
+<div class="hint">
+그래프의 위쪽은 강한 힘, 오른쪽은 빠른 움직임을 의미한다.
+현재 설계 지점은 청록색 원으로 표시된다.
+</div>
+
+</section>
+
+
+<div class="section-title">
+03 · ENGINEERING PRINCIPLE
+</div>
+
+<div class="explain-grid">
+
+<div class="explain-card">
+
+<div class="num">
+01 MOTOR + GEAR
+</div>
+
+<h3>
+힘이 세지면 왜 느려질까?
+</h3>
+
+<p>
+감속 기어는 모터의 빠른 회전을 느리게 만드는 대신
+출력 토크를 증가시킨다.
+따라서 무거운 물체에는 큰 기어비가 유리하지만
+빠른 작업에는 작은 기어비가 유리하다.
+</p>
+
+</div>
+
+
+<div class="explain-card">
+
+<div class="num">
+02 TACTILE SENSOR
+</div>
+
+<h3>
+로봇에게 촉각은 왜 필요할까?
+</h3>
+
+<p>
+로봇은 물체가 미끄러지는지,
+접촉 압력이 특정 지점에 집중되는지를
+센서로 감지해야 한다.
+센서 정보가 정밀할수록 작은 물체를 다루는 제어가 쉬워진다.
+</p>
+
+</div>
+
+
+<div class="explain-card">
+
+<div class="num">
+03 COMPLIANCE
+</div>
+
+<h3>
+단단한 손이 항상 좋은 것은 아니다
+</h3>
+
+<p>
+달걀이나 과일처럼 손상되기 쉬운 물체를 잡을 때에는
+관절과 손가락이 어느 정도 변형되며 힘을 분산시키는
+유연성이 중요하다.
+반면 지나친 유연성은 위치 제어 정확도를 낮출 수 있다.
+</p>
+
+</div>
+
+</div>
+
+
+<div class="reference">
+
+자료 참고:
+MIT Technology Review Korea,
+‘현실 세계로 들어온 AI의 다음 전장: Physical AI’(2026),
+‘로봇은 어떻게 학습하는가: 한눈에 보는 로봇 학습의 진화사’(2026),
+‘리얼월드, 로봇 손 10여 종 실제 성능 분석한 오픈 플랫폼 공개’(2026).
+
+<div class="disclaimer">
+본 웹페이지의 힘·파손 기준값과 성능 지수는 물리적 원리를
+학습하기 위해 단순화한 교육용 모델이며 실제 산업용 로봇의
+정확한 사양을 의미하지 않는다.
+</div>
+
+</div>
+
+</main>
+
+
+<script>
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+const objects = {
+
+egg:{
+name:"달걀",
+emoji:"🥚",
+mass:0.06,
+mu:0.32,
+maxForce:5.5,
+dexReq:55,
+idealCompliance:82
+},
+
+cup:{
+name:"종이컵",
+emoji:"🥤",
+mass:0.03,
+mu:0.40,
+maxForce:9,
+dexReq:42,
+idealCompliance:70
+},
+
+bottle:{
+name:"물병",
+emoji:"🧴",
+mass:0.50,
+mu:0.28,
+maxForce:32,
+dexReq:48,
+idealCompliance:55
+},
+
+bolt:{
+name:"정밀 볼트",
+emoji:"🔩",
+mass:0.04,
+mu:0.35,
+maxForce:100,
+dexReq:82,
+idealCompliance:30
+},
+
+box:{
+name:"상자",
+emoji:"📦",
+mass:1.0,
+mu:0.45,
+maxForce:70,
+dexReq:38,
+idealCompliance:42
+}
+
+};
+
+let selected = "egg";
+
+const torque = $("#torque");
+const gear = $("#gear");
+const radius = $("#radius");
+const fingerCount = $("#fingerCount");
+const compliance = $("#compliance");
+const sensor = $("#sensor");
+
+const clamp = (x,a,b) => Math.max(a,Math.min(b,x));
+
+
+function calculate(p,obj){
+
+const efficiency = 0.72;
+
+const r = p.radius / 1000;
+
+const force =
+efficiency *
+p.torque *
+p.gear /
+r;
+
+const required =
+obj.mass *
+9.81 *
+1.30 /
+(p.fingers * obj.mu);
+
+const speed =
+1800 /
+p.gear;
+
+const current =
+p.torque /
+0.05;
+
+const complianceMatch =
+100 -
+Math.abs(
+p.compliance -
+obj.idealCompliance
+);
+
+let dex =
+15 +
+p.fingers * 7 +
+Math.log2(p.sensor) * 10 +
+complianceMatch * 0.16;
+
+dex = clamp(dex,0,100);
+
+const ideal =
+Math.sqrt(
+required *
+obj.maxForce
+);
+
+let status = "stable";
+
+if(force < required){
+status = "slip";
+}
+else if(force > obj.maxForce){
+status = "damage";
+}
+else if(dex < obj.dexReq){
+status = "precision";
+}
+
+let score = 100;
+
+score -=
+Math.min(
+40,
+Math.abs(force-ideal) /
+Math.max(ideal,0.1) *
+25
+);
+
+score -=
+current * 3;
+
+score -=
+Math.abs(
+p.compliance -
+obj.idealCompliance
+) * 0.15;
+
+score -=
+Math.max(
+0,
+obj.dexReq-dex
+) * 1.2;
+
+if(status === "slip"){
+score -= 35;
+}
+
+if(status === "damage"){
+score -= 45;
+}
+
+if(status === "precision"){
+score -= 20;
+}
+
+score = clamp(score,0,100);
+
+return{
+force,
+required,
+speed,
+current,
+dex,
+ideal,
+score,
+status
+};
+
+}
+
+
+function readState(){
+
+return{
+torque:+torque.value,
+gear:+gear.value,
+radius:+radius.value,
+fingers:+fingerCount.value,
+compliance:+compliance.value,
+sensor:+sensor.value
+};
+
+}
+
+
+function drawHand(n){
+
+const layer = $("#fingerLayer");
+
+layer.innerHTML = "";
+
+const radius = 82;
+
+for(let i=0;i<n;i++){
+
+const angle =
+-70 +
+(140/(Math.max(n-1,1))) * i;
+
+const finger =
+document.createElement("div");
+
+finger.className = "finger";
+
+finger.style.transform =
+`rotate(${angle}deg)
+translateY(-${radius}px)`;
+
+const sensorDot =
+document.createElement("div");
+
+sensorDot.className = "sensor";
+
+finger.appendChild(sensorDot);
+
+layer.appendChild(finger);
+
+}
+
+}
+
+
+function update(){
+
+const obj = objects[selected];
+const p = readState();
+const m = calculate(p,obj);
+
+$("#torqueVal").textContent =
+p.torque.toFixed(3)+" N·m";
+
+$("#gearVal").textContent =
+p.gear+":1";
+
+$("#radiusVal").textContent =
+p.radius+" mm";
+
+$("#fingerVal").textContent =
+p.fingers+"개";
+
+$("#complianceVal").textContent =
+p.compliance+" / 100";
+
+
+$("#forceOut").textContent =
+m.force.toFixed(1);
+
+$("#reqOut").textContent =
+m.required.toFixed(2);
+
+$("#speedOut").textContent =
+m.speed.toFixed(0);
+
+$("#dexOut").textContent =
+m.dex.toFixed(0);
+
+$("#currentOut").textContent =
+m.current.toFixed(2);
+
+$("#maxOut").textContent =
+obj.maxForce.toFixed(1);
+
+$("#score").textContent =
+Math.round(m.score);
+
+$("#scoreBar").style.width =
+m.score+"%";
+
+
+const visual =
+$("#objectVisual");
+
+visual.textContent =
+obj.emoji;
+
+visual.className =
+"object";
+
+
+const status =
+$("#status");
+
+let analysis = "";
+
+if(m.status === "stable"){
+
+status.textContent =
+"✓ 안정적으로 잡을 수 있음";
+
+status.className =
+"status good";
+
+visual.classList.add("stable");
+
+analysis =
+`${obj.name}을 잡는 데 필요한 최소 힘보다 충분히 크면서
+파손 위험 기준보다 낮다.
+힘과 정밀도의 균형이 비교적 안정적인 설계이다.`;
+
+}
+
+else if(m.status === "slip"){
+
+status.textContent =
+"↓ 미끄러질 가능성이 큼";
+
+status.className =
+"status bad";
+
+visual.classList.add("slip");
+
+analysis =
+`현재 손가락 끝 힘이 ${obj.name}의 무게와 마찰 조건을
+버티기 위한 최소 힘보다 작다.
+모터 토크 또는 기어비를 높이는 방법을 시험해 볼 수 있다.`;
+
+}
+
+else if(m.status === "damage"){
+
+status.textContent =
+"⚠ 물체 손상 위험";
+
+status.className =
+"status bad";
+
+visual.classList.add("damage");
+
+analysis =
+`필요 이상의 힘이 작용하고 있다.
+특히 ${obj.name}처럼 변형되기 쉬운 물체에서는
+힘을 크게 만드는 것이 오히려 좋지 않은 설계가 된다.`;
+
+}
+
+else{
+
+status.textContent =
+"△ 정밀 조작 성능 부족";
+
+status.className =
+"status warn";
+
+visual.classList.add("stable");
+
+analysis =
+`${obj.name}을 잡을 힘은 충분하지만 정밀 조작 지수가
+요구 수준에 미치지 못한다.
+센서 해상도·손가락 수·유연성 조건을 바꾸어 볼 수 있다.`;
+
+}
+
+$("#analysis").textContent =
+analysis;
+
+drawHand(p.fingers);
+
+drawChart();
+
+}
+
+
+function drawChart(){
+
+const canvas =
+$("#chart");
+
+const rect =
+canvas.getBoundingClientRect();
+
+const dpr =
+window.devicePixelRatio || 1;
+
+canvas.width =
+rect.width*dpr;
+
+canvas.height =
+320*dpr;
+
+const ctx =
+canvas.getContext("2d");
+
+ctx.scale(dpr,dpr);
+
+const W = rect.width;
+const H = 320;
+
+const pad = 55;
+
+ctx.clearRect(0,0,W,H);
+
+const obj =
+objects[selected];
+
+const p =
+readState();
+
+const points = [];
+
+let maxForce = 0;
+let maxSpeed = 0;
+
+for(let g=3;g<=30;g++){
+
+const m =
+calculate({
+...p,
+gear:g
+},obj);
+
+points.push({
+g,
+force:m.force,
+speed:m.speed
+});
+
+maxForce =
+Math.max(maxForce,m.force);
+
+maxSpeed =
+Math.max(maxSpeed,m.speed);
+
+}
+
+maxForce *= 1.15;
+maxSpeed *= 1.08;
+
+
+function X(speed){
+return pad +
+(speed/maxSpeed) *
+(W-pad*1.6);
+}
+
+function Y(force){
+return H-pad -
+(force/maxForce) *
+(H-pad*1.6);
+}
+
+
+ctx.strokeStyle =
+"#244252";
+
+ctx.lineWidth = 1;
+
+ctx.beginPath();
+
+ctx.moveTo(pad,20);
+ctx.lineTo(pad,H-pad);
+ctx.lineTo(W-20,H-pad);
+
+ctx.stroke();
+
+
+ctx.fillStyle =
+"#7895a6";
+
+ctx.font =
+"11px Arial";
+
+ctx.fillText(
+"힘 ↑",
+15,
+28
+);
+
+ctx.fillText(
+"속도 →",
+W-58,
+H-18
+);
+
+
+const req =
+calculate(p,obj).required;
+
+const safeTop =
+Math.min(
+obj.maxForce,
+maxForce
+);
+
+const y1 =
+Y(safeTop);
+
+const y2 =
+Y(req);
+
+ctx.fillStyle =
+"#52ffad12";
+
+ctx.fillRect(
+pad,
+y1,
+W-pad-20,
+y2-y1
+);
+
+ctx.fillStyle =
+"#52ffad";
+
+ctx.font =
+"10px Arial";
+
+ctx.fillText(
+"안전 힘 범위",
+pad+7,
+y1+14
+);
+
+
+ctx.beginPath();
+
+points.forEach((pt,i)=>{
+
+const x =
+X(pt.speed);
+
+const y =
+Y(pt.force);
+
+if(i===0){
+ctx.moveTo(x,y);
+}else{
+ctx.lineTo(x,y);
+}
+
+});
+
+const grad =
+ctx.createLinearGradient(
+pad,0,W,0
+);
+
+grad.addColorStop(
+0,
+"#a78bfa"
+);
+
+grad.addColorStop(
+1,
+"#39e7ff"
+);
+
+ctx.strokeStyle =
+grad;
+
+ctx.lineWidth =
+3;
+
+ctx.stroke();
+
+
+const current =
+calculate(p,obj);
+
+const cx =
+X(current.speed);
+
+const cy =
+Y(current.force);
+
+ctx.beginPath();
+
+ctx.arc(
+cx,
+cy,
+7,
+0,
+Math.PI*2
+);
+
+ctx.fillStyle =
+"#52ffad";
+
+ctx.fill();
+
+ctx.strokeStyle =
+"#ffffff";
+
+ctx.lineWidth =
+2;
+
+ctx.stroke();
+
+ctx.fillStyle =
+"#c8f9ff";
+
+ctx.font =
+"11px Arial";
+
+ctx.fillText(
+`현재 ${p.gear}:1`,
+cx+10,
+cy-8
+);
+
+}
+
+
+function optimize(){
+
+const obj =
+objects[selected];
+
+let best = null;
+
+const sensorList =
+[4,8,16,32];
+
+for(let fingers=2;
+fingers<=5;
+fingers++){
+
+for(const grid of sensorList){
+
+for(let comp=0;
+comp<=100;
+comp+=10){
+
+for(let g=3;
+g<=30;
+g++){
+
+for(let t=0.01;
+t<=0.12;
+t+=0.01){
+
+const p = {
+torque:t,
+gear:g,
+radius:+radius.value,
+fingers,
+compliance:comp,
+sensor:grid
+};
+
+const m =
+calculate(p,obj);
+
+let bonus =
+m.status==="stable"
+? 20
+: 0;
+
+const total =
+m.score+bonus;
+
+if(
+!best ||
+total>best.total
+){
+
+best={
+...p,
+total
+};
+
+}
+
+}
+
+}
+
+}
+
+}
+
+}
+
+
+torque.value =
+best.torque;
+
+gear.value =
+best.gear;
+
+fingerCount.value =
+best.fingers;
+
+compliance.value =
+best.compliance;
+
+sensor.value =
+best.sensor;
+
+update();
+
+}
+
+
+$$(".object-btn").forEach(btn=>{
+
+btn.addEventListener(
+"click",
+()=>{
+
+$$(".object-btn")
+.forEach(b=>
+b.classList.remove("active")
+);
+
+btn.classList.add("active");
+
+selected =
+btn.dataset.key;
+
+update();
+
+}
+);
+
+});
+
+
+[
+torque,
+gear,
+radius,
+fingerCount,
+compliance,
+sensor
+].forEach(input=>{
+
+input.addEventListener(
+"input",
+update
+);
+
+});
+
+
+$("#optimize")
+.addEventListener(
+"click",
+optimize
+);
+
+
+window.addEventListener(
+"resize",
+drawChart
+);
+
+
+update();
+
+</script>
+
+</body>
+</html>
